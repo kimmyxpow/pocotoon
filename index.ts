@@ -121,7 +121,7 @@ function saveToJson(manhwaData: Manhwa[]) {
 }
 
 async function main() {
-    const browser = await puppeteer.launch({ headless: true });
+    const browser = await puppeteer.launch({ headless: true, args: ["--no-sandbox", "--disable-setuid-sandbox"] });
     const page = await browser.newPage();
     const manhwaUrls = [
         "https://kiryuu01.com/manga/solo-leveling/",

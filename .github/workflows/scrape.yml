@@ -19,7 +19,7 @@ jobs:
                   bun-version: latest
 
             - name: Install dependencies
-              run: bun install puppeteer axios
+              run: bun install
 
             - name: Run scraper
               run: bun index.ts
