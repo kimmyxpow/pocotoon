@@ -81,7 +81,7 @@ async function scrapeManhwa(url: string, page: Page): Promise<Manhwa> {
         const link = chapterLinks[i];
         const chapterNum = i + 1;
         console.log(`Visiting chapter ${chapterNum}: ${link}`);
-        await page.goto(link, { waitUntil: "domcontentloaded", timeout: 30000 });
+        await page.goto(link, { waitUntil: "domcontentloaded", timeout: 60000 });
 
         const imageUrls = await page.$$eval("#readerarea img", (imgs) => imgs.map((img) => img.src));
         const chapterFolder = path.join(
