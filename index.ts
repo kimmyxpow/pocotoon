@@ -22,14 +22,19 @@ interface Manhwa {
 }
 
 async function downloadImage(url: string, filepath: string): Promise<void> {
-    const response = await axios({
-        url,
-        method: "GET",
-        responseType: "stream",
-    });
-    return new Promise((resolve) => {
-        response.data.pipe(fs.createWriteStream(filepath)).on("finish", resolve);
-    });
+    try {
+        const response = await axios({
+            url,
+            method: "GET",
+            responseType: "stream",
+        });
+
+        return new Promise((resolve) => {
+            response?.data.pipe(fs.createWriteStream(filepath)).on("finish", resolve);
+        });
+    } catch (error) {
+        throw new Error(`Failed to download image: ${error}`);
+    }
 }
 
 async function scrapeManhwa(url: string, page: Page): Promise<Manhwa> {
