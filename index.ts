@@ -14,7 +14,7 @@ interface InfoTable {
 
 interface Manhwa {
     title: string;
-    alternateTitle: string;
+    alternateTitle?: string | null;
     cover: string;
     description: string;
     info: InfoTable;
@@ -45,9 +45,10 @@ async function scrapeManhwa(url: string, page: Page): Promise<Manhwa> {
     await page.goto(url, { waitUntil: "domcontentloaded", timeout: 60000 });
 
     const title = await page.$eval(".seriestucon .seriestuheader .entry-title", (el) => el.textContent!.trim());
-    const alternateTitle = await page.$eval(".seriestucon .seriestuheader .seriestualt", (el) =>
-        el.textContent!.trim()
-    );
+    const alternateTitleElement = await page.$(".seriestucon .seriestuheader .seriestualt");
+    const alternateTitle = alternateTitleElement
+        ? await page.evaluate((el) => el?.textContent?.trim(), alternateTitleElement)
+        : null;
     const coverUrl = await page.$eval(".seriestucontent img", (img) => img.src);
     const description = await page.$eval(".seriestucontent .seriestucontentr .entry-content p", (el) =>
         el.textContent!.trim()
