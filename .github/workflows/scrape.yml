@@ -24,10 +24,18 @@ jobs:
             - name: Run scraper
               run: bun index.ts
 
+            - name: Install Git LFS
+              run: |
+                  sudo apt-get update
+                  sudo apt-get install git-lfs
+                  git lfs install
+                  git lfs track "chapters/**" "covers/**"
+
             - name: Commit and push results
               run: |
                   git config --global user.name "GitHub Action"
                   git config --global user.email "action@github.com"
                   git add manhwa_data.json chapters/ covers/
                   git commit -m "Update manhwa data - $(date)" || echo "No changes to commit"
-                  git push
+                  git push || echo "Push failed: $?"
+                  git status

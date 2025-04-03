@@ -1,0 +1,2 @@
+chapters/** filter=lfs diff=lfs merge=lfs -text
+covers/** filter=lfs diff=lfs merge=lfs -text
