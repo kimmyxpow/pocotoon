@@ -89,9 +89,13 @@ async function scrapeManhwa(url: string, page: Page): Promise<Manhwa> {
         const imagePaths: string[] = [];
         for (let j = 0; j < imageUrls.length; j++) {
             const url = imageUrls[j];
-            const imagePath = path.join(chapterFolder, `image_${j + 1}.jpg`);
-            await downloadImage(url, imagePath);
-            imagePaths.push(imagePath);
+            try {
+                const imagePath = path.join(chapterFolder, `image_${j + 1}.jpg`);
+                await downloadImage(url, imagePath);
+                imagePaths.push(imagePath);
+            } catch (error) {
+                console.log(`Failed to download image from URL ${url} (chapter ${chapterNum}, image ${j + 1}):`, error);
+            }
         }
 
         chapters.push({ chapterNumber: chapterNum, images: imagePaths });
