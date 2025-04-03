@@ -39,7 +39,6 @@ async function scrapeManhwa(url: string, page: Page): Promise<Manhwa> {
     );
     await page.goto(url, { waitUntil: "domcontentloaded", timeout: 60000 });
 
-    // Ambil data dari halaman utama
     const title = await page.$eval(".seriestucon .seriestuheader .entry-title", (el) => el.textContent!.trim());
     const alternateTitle = await page.$eval(".seriestucon .seriestuheader .seriestualt", (el) =>
         el.textContent!.trim()
@@ -49,7 +48,6 @@ async function scrapeManhwa(url: string, page: Page): Promise<Manhwa> {
         el.textContent!.trim()
     );
 
-    // Unduh cover
     const coverPath = path.join(process.cwd(), "covers", `${title.replace(/[^a-zA-Z0-9]/g, "_")}.jpg`);
     fs.mkdirSync(path.dirname(coverPath), { recursive: true });
     await downloadImage(coverUrl, coverPath);
@@ -73,38 +71,31 @@ async function scrapeManhwa(url: string, page: Page): Promise<Manhwa> {
     console.log(`Found ${chapterLinks.length} chapters for ${title}.`);
 
     const chapters: Chapter[] = [];
-    const chunkSize = 3;
-    for (let i = 0; i < chapterLinks.length; i += chunkSize) {
-        const chunk = chapterLinks.slice(i, i + chunkSize);
-        const chapterPromises = chunk.map(async (link, index) => {
-            const chapterNum = i + index + 1;
-            console.log(`Visiting chapter ${chapterNum}: ${link}`);
-            await page.goto(link, { waitUntil: "domcontentloaded", timeout: 60000 });
+    for (let i = 0; i < chapterLinks.length; i++) {
+        const link = chapterLinks[i];
+        const chapterNum = i + 1;
+        console.log(`Visiting chapter ${chapterNum}: ${link}`);
+        await page.goto(link, { waitUntil: "domcontentloaded", timeout: 30000 });
 
-            const imageUrls = await page.$$eval("#readerarea img", (imgs) => imgs.map((img) => img.src));
-            const chapterFolder = path.join(
-                process.cwd(),
-                "chapters",
-                title.replace(/[^a-zA-Z0-9]/g, "_"),
-                `chapter_${chapterNum}`
-            );
-            fs.mkdirSync(chapterFolder, { recursive: true });
+        const imageUrls = await page.$$eval("#readerarea img", (imgs) => imgs.map((img) => img.src));
+        const chapterFolder = path.join(
+            process.cwd(),
+            "chapters",
+            title.replace(/[^a-zA-Z0-9]/g, "_"),
+            `chapter_${chapterNum}`
+        );
+        fs.mkdirSync(chapterFolder, { recursive: true });
 
-            const imagePaths: string[] = [];
-            await Promise.all(
-                imageUrls.map(async (url, j) => {
-                    const imagePath = path.join(chapterFolder, `image_${j + 1}.jpg`);
-                    await downloadImage(url, imagePath);
-                    imagePaths.push(imagePath);
-                })
-            );
+        const imagePaths: string[] = [];
+        for (let j = 0; j < imageUrls.length; j++) {
+            const url = imageUrls[j];
+            const imagePath = path.join(chapterFolder, `image_${j + 1}.jpg`);
+            await downloadImage(url, imagePath);
+            imagePaths.push(imagePath);
+        }
 
-            return { chapterNumber: chapterNum, images: imagePaths };
-        });
-
-        const chapterResults = await Promise.all(chapterPromises);
-        chapters.push(...chapterResults);
-        console.log(`Finished processing chunk of chapters ${i + 1} - ${i + chunkSize}`);
+        chapters.push({ chapterNumber: chapterNum, images: imagePaths });
+        console.log(`Finished processing chapter ${chapterNum} with ${imagePaths.length} images`);
     }
 
     return { title, alternateTitle, cover: coverPath, description, info, chapters };
@@ -124,7 +115,10 @@ function saveToJson(manhwaData: Manhwa[]) {
 }
 
 async function main() {
-    const browser = await puppeteer.launch({ headless: true, args: ["--no-sandbox", "--disable-setuid-sandbox"] });
+    const browser = await puppeteer.launch({
+        headless: true,
+        args: ["--no-sandbox", "--disable-setuid-sandbox"],
+    });
     const page = await browser.newPage();
     const manhwaUrls = [
         "https://kiryuu01.com/manga/solo-leveling/",
